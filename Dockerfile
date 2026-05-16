@@ -54,8 +54,9 @@ COPY . .
 # Run post-install scripts (cache:clear, assets:install, importmap:install)
 RUN composer run-script post-install-cmd --no-interaction || true
 
-# Set file permissions for Symfony var/ directory
-RUN chown -R www-data:www-data /var/www/html/var \
+# Create Symfony var/ directory and set permissions
+RUN mkdir -p /var/www/html/var \
+    && chown -R www-data:www-data /var/www/html/var \
     && chmod -R 775 /var/www/html/var
 
 # Copy Nginx configuration files
