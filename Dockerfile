@@ -33,6 +33,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         intl \
         opcache
 
+# Ensure PHP-FPM workers keep runtime env vars (DATABASE_URL, APP_SECRET, etc.)
+RUN { \
+      echo '[www]'; \
+      echo 'clear_env = no'; \
+    } > /usr/local/etc/php-fpm.d/zz-clear-env.conf
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
