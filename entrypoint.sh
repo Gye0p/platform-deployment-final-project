@@ -90,5 +90,11 @@ php bin/console cache:warmup --env=prod --no-debug
 
 chown -R www-data:www-data /var/www/html/var
 
-echo "==> Entrypoint complete. Starting services..."
+# Make Nginx listen on $PORT (Railway injects this; defaults to 80 for local Docker).
+# Without this, Railway's proxy can't reach Nginx because it routes to $PORT, not 80.
+export PORT="${PORT:-80}"
+echo "==> Configuring Nginx to listen on port ${PORT}..."
+sed -i "s/listen 80;/listen ${PORT};/" /etc/nginx/conf.d/default.conf
+
+echo "==> Entrypoint complete. Starting services on port ${PORT}..."
 exec "$@"
