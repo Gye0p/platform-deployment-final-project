@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 
 # Install system dependencies (including ICU for intl and libs for gd)
 RUN apt-get update && apt-get install -y \
