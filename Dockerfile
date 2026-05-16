@@ -39,6 +39,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
+# Railway/Docker build runs as root; allow Composer plugins (Symfony Flex / symfony-cmd)
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Copy composer files first (layer caching)
 COPY composer.json composer.lock symfony.lock ./
 
