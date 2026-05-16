@@ -77,8 +77,9 @@ COPY nginx-main.conf /etc/nginx/conf.d/default.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy and set entrypoint
+# Strip Windows CRLF line endings (\r\n -> \n) to prevent 'no such file or directory' on Linux
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Expose port 80
 EXPOSE 80
