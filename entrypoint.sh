@@ -58,13 +58,13 @@ SLEEP_SECONDS="${DB_WAIT_SLEEP_SECONDS:-3}"
 DB_READY=0
 
 for i in $(seq 1 "$MAX_RETRIES"); do
-  # Use Symfony's built-in command to test if the DB is reachable
-  if php bin/console doctrine:database:create --if-not-exists --no-interaction >/dev/null 2>&1 || php bin/console doctrine:query:sql "SELECT 1" >/dev/null 2>&1; then
+  # Removed >/dev/null 2>&1 so the real error prints out in your Railway logs
+  if php bin/console doctrine:query:sql "SELECT 1" --no-interaction; then
     DB_READY=1
     break
   fi
-  echo "  Database not ready yet, retrying in ${SLEEP_SECONDS}s... (${i}/${MAX_RETRIES})" 
-  sleep "$SLEEP_SECONDS" 
+  echo "  Database not ready yet, retrying in ${SLEEP_SECONDS}s... (${i}/${MAX_RETRIES})"
+  sleep "$SLEEP_SECONDS"
 done
 
 if [ "$DB_READY" -ne 1 ]; then
