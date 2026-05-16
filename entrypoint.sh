@@ -30,10 +30,10 @@ if ! command -v mysqladmin >/dev/null 2>&1; then
   exit 1
 fi
 
-DB_HOST=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo $u["host"] ?? "";')
+DB_HOST=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo isset($u["host"]) ? rawurldecode($u["host"]) : "";')
 DB_PORT=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo $u["port"] ?? "3306";')
-DB_USER=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo $u["user"] ?? "";')
-DB_PASS=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo $u["pass"] ?? "";')
+DB_USER=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo isset($u["user"]) ? rawurldecode($u["user"]) : "";')
+DB_PASS=$(php -r '$u=parse_url(getenv("DATABASE_URL")); echo isset($u["pass"]) ? rawurldecode($u["pass"]) : "";')
 
 if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ]; then
   echo "ERROR: Could not parse DATABASE_URL for database connection."
@@ -49,10 +49,17 @@ echo "==> Waiting for database connection..."
 MAX_RETRIES="${DB_WAIT_MAX_RETRIES:-60}"
 SLEEP_SECONDS="${DB_WAIT_SLEEP_SECONDS:-3}"
 DB_READY=0
+LAST_DB_ERROR=""
 for i in $(seq 1 "$MAX_RETRIES"); do
-  if mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" "${MYSQLADMIN_AUTH[@]}" --silent 2>/dev/null; then
+  if DB_CHECK_OUTPUT=$(mysqladmin ping --protocol=tcp --connect-timeout=2 -h"$DB_HOST" -P"$DB_PORT" "${MYSQLADMIN_AUTH[@]}" --silent 2>&1); then
     DB_READY=1
     break
+  fi
+  LAST_DB_ERROR="$DB_CHECK_OUTPUT"
+  if echo "$DB_CHECK_OUTPUT" | grep -qi "access denied"; then
+    echo "ERROR: Database credentials were rejected (Access denied)."
+    echo "ERROR: Check DATABASE_URL or MYSQL_* variable references in Railway."
+    exit 1
   fi
   echo "  Database not ready yet, retrying in ${SLEEP_SECONDS}s... (${i}/${MAX_RETRIES})"
   sleep "$SLEEP_SECONDS"
@@ -60,6 +67,9 @@ done
 
 if [ "$DB_READY" -ne 1 ]; then
   echo "ERROR: Database not reachable after ${MAX_RETRIES} attempts."
+  if [ -n "$LAST_DB_ERROR" ]; then
+    echo "ERROR: Last database check: $LAST_DB_ERROR"
+  fi
   exit 1
 fi
 echo "==> Database is ready."
