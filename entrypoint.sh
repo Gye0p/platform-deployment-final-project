@@ -35,6 +35,19 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
+# Append serverVersion and charset to DATABASE_URL if missing.
+# Railway's MySQL plugin provides a bare URL (no ?serverVersion=...) which
+# causes Doctrine DBAL to fail or warn. We append the defaults here safely.
+if ! echo "${DATABASE_URL}" | grep -q "serverVersion"; then
+  DB_SERVER_VERSION="${DB_SERVER_VERSION:-8.0}"
+  if echo "${DATABASE_URL}" | grep -q "?"; then
+    export DATABASE_URL="${DATABASE_URL}&serverVersion=${DB_SERVER_VERSION}&charset=utf8mb4"
+  else
+    export DATABASE_URL="${DATABASE_URL}?serverVersion=${DB_SERVER_VERSION}&charset=utf8mb4"
+  fi
+  echo "==> Appended serverVersion=${DB_SERVER_VERSION}&charset=utf8mb4 to DATABASE_URL"
+fi
+
 echo "==> Waiting for database connection via Doctrine..."
 MAX_RETRIES="${DB_WAIT_MAX_RETRIES:-60}"
 SLEEP_SECONDS="${DB_WAIT_SLEEP_SECONDS:-3}"
