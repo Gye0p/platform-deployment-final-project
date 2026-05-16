@@ -53,7 +53,7 @@ RUN composer install \
 COPY . .
 
 # Run post-install scripts (cache:clear, assets:install, importmap:install)
-RUN composer run-script post-install-cmd --no-interaction || true
+RUN composer run-script post-install-cmd --no-interaction
 
 # Create Symfony var/ directory and set permissions
 RUN mkdir -p /var/www/html/var \

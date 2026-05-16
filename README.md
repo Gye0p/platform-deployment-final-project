@@ -101,6 +101,11 @@ Keeps sensitive information out of the codebase and allows flexible configuratio
 ## Deployment Notes
 
 - Ensure all environment variables are properly set before deployment
+- Required production variables:
+  - `APP_ENV=prod`
+  - `APP_DEBUG=0`
+  - `APP_SECRET` (must be non-empty)
+  - `DATABASE_URL` **or** `MYSQLHOST`/`MYSQLPORT`/`MYSQLUSER`/`MYSQLPASSWORD`/`MYSQLDATABASE` (Railway style)
 - Verify database connection settings in `.env`
 - Use production mode for Symfony in deployment
 - Confirm Nginx is correctly routing requests to PHP-FPM
