@@ -3,9 +3,14 @@ set -e
 
 echo "==> Starting entrypoint.sh..."
 
-# Wait for MySQL to be ready
+# Parse DATABASE_URL to extract host, user, password, port
 echo "==> Waiting for database connection..."
-until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1; do
+DB_HOST=$(echo $DATABASE_URL | sed -e 's/.*@\(.*\):.*/\1/' | cut -d'/' -f1 | cut -d':' -f1)
+DB_PORT=$(echo $DATABASE_URL | sed -e 's/.*:\([0-9]*\)\/.*/\1/')
+DB_USER=$(echo $DATABASE_URL | sed -e 's/mysql:\/\/\([^:]*\):.*/\1/')
+DB_PASS=$(echo $DATABASE_URL | sed -e 's/mysql:\/\/[^:]*:\([^@]*\)@.*/\1/')
+
+until mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --silent 2>/dev/null; do
   echo "  Database not ready yet, retrying in 3s..."
   sleep 3
 done
