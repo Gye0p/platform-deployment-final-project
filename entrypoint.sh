@@ -16,7 +16,7 @@ if [ -z "${DATABASE_URL:-}" ]; then
     export DATABASE_URL="mysql://${MYSQLUSER}:${MYSQLPASSWORD:-}@${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?serverVersion=8.0&charset=utf8mb4"
   elif [ -n "${MYSQL_HOST:-}" ] && [ -n "${MYSQL_USER:-}" ] && [ -n "${MYSQL_DATABASE:-}" ]; then
     MYSQL_PORT="${MYSQL_PORT:-3306}"
-    export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD:-}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.0&charset=utf8mb4"
+    export DATABASE_URL="mysql://${MYSQLUSER}:${MYSQLPASSWORD:-}@${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?serverVersion=9.4.0&charset=utf8mb4"
   fi
 fi
 
@@ -50,19 +50,21 @@ MAX_RETRIES="${DB_WAIT_MAX_RETRIES:-60}"
 SLEEP_SECONDS="${DB_WAIT_SLEEP_SECONDS:-3}"
 DB_READY=0
 LAST_DB_ERROR=""
+
+
+echo "==> Waiting for database connection via Doctrine..."
+MAX_RETRIES="${DB_WAIT_MAX_RETRIES:-60}"
+SLEEP_SECONDS="${DB_WAIT_SLEEP_SECONDS:-3}"
+DB_READY=0
+
 for i in $(seq 1 "$MAX_RETRIES"); do
-  if DB_CHECK_OUTPUT=$(mysqladmin ping --protocol=tcp --connect-timeout=2 -h"$DB_HOST" -P"$DB_PORT" "${MYSQLADMIN_AUTH[@]}" --silent 2>&1); then
+  # Use Symfony's built-in command to test if the DB is reachable
+  if php bin/console doctrine:database:create --if-not-exists --no-interaction >/dev/null 2>&1 || php bin/console doctrine:query:sql "SELECT 1" >/dev/null 2>&1; then
     DB_READY=1
     break
   fi
-  LAST_DB_ERROR="$DB_CHECK_OUTPUT"
-  if echo "$DB_CHECK_OUTPUT" | grep -qi "access denied"; then
-    echo "ERROR: Database credentials were rejected (Access denied)."
-    echo "ERROR: Check DATABASE_URL or MYSQL_* variable references in Railway."
-    exit 1
-  fi
-  echo "  Database not ready yet, retrying in ${SLEEP_SECONDS}s... (${i}/${MAX_RETRIES})"
-  sleep "$SLEEP_SECONDS"
+  echo "  Database not ready yet, retrying in ${SLEEP_SECONDS}s... (${i}/${MAX_RETRIES})" 
+  sleep "$SLEEP_SECONDS" 
 done
 
 if [ "$DB_READY" -ne 1 ]; then
