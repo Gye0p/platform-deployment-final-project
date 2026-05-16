@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker files (not needed inside image)
+docker-compose*.yaml
+compose*.yaml
+Dockerfile
+.dockerignore
+
+# Development tools
+.env.local
+.env.test
+.env.dev
+
+# Symfony var/ (generated at runtime)
+var/
+
+# Node modules (if any)
+node_modules/
+
+# IDE and editor configs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHPUnit
+phpunit.xml
+phpunit.dist.xml
+tests/
+
+# Documentation
+README.md
+*.md
+
+# OS files
+.DS_Store
+Thumbs.db
